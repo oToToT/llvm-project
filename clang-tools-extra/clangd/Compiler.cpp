@@ -123,6 +123,37 @@ prepareCompilerInstance(std::unique_ptr<clang::CompilerInvocation> CI,
   if (!Clang->hasTarget())
     return nullptr;
 
+  // Correctly set AuxTarget. The code is borrowed from
+  // `CompilerInstance::ExecuteAction(FrontendAction &)` inside
+  // "clang/lib/Frontend/CompilerInstance.cpp"
+  if ((Clang->getLangOpts().CUDA || Clang->getLangOpts().OpenMPIsDevice ||
+       Clang->getLangOpts().SYCLIsDevice) &&
+      !Clang->getFrontendOpts().AuxTriple.empty()) {
+    auto TO = std::make_shared<TargetOptions>();
+    TO->Triple = llvm::Triple::normalize(Clang->getFrontendOpts().AuxTriple);
+    if (Clang->getFrontendOpts().AuxTargetCPU)
+      TO->CPU = Clang->getFrontendOpts().AuxTargetCPU.getValue();
+    if (Clang->getFrontendOpts().AuxTargetFeatures)
+      TO->FeaturesAsWritten =
+          Clang->getFrontendOpts().AuxTargetFeatures.getValue();
+    TO->HostTriple = Clang->getTarget().getTriple().str();
+    Clang->setAuxTarget(
+        TargetInfo::CreateTargetInfo(Clang->getDiagnostics(), TO));
+  }
+
+  // Inform the target of the language options.
+  //
+  // FIXME: We shouldn't need to do this, the target should be immutable once
+  // created. This complexity should be lifted elsewhere.
+  Clang->getTarget().adjust(Clang->getLangOpts());
+
+  // Adjust target options based on codegen options.
+  Clang->getTarget().adjustTargetOptions(Clang->getCodeGenOpts(),
+                                         Clang->getTargetOpts());
+
+  if (auto *Aux = Clang->getAuxTarget())
+    Clang->getTarget().setAuxTarget(Aux);
+
   // RemappedFileBuffers will handle the lifetime of the Buffer pointer,
   // release it.
   Buffer.release();

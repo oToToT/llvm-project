@@ -394,10 +394,6 @@ llvm::ErrorOr<PrecompiledPreamble> PrecompiledPreamble::Build(
   // created. This complexity should be lifted elsewhere.
   Clang->getTarget().adjust(Clang->getLangOpts());
 
-  // Adjust target options based on codegen options.
-  Clang->getTarget().adjustTargetOptions(Clang->getCodeGenOpts(),
-                                         Clang->getTargetOpts());
-
   if (auto *Aux = Clang->getAuxTarget())
     Clang->getTarget().setAuxTarget(Aux);
 

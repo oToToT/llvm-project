@@ -917,6 +917,7 @@ clangd accepts flags on the commandline, and in the CLANGD_FLAGS environment var
                                                 std::move(*Mappings));
   }
 
+  std::cerr << "TRY_CREATE_CLANGD_LSP_SERVER" << std::endl;
   ClangdLSPServer LSPServer(*TransportLayer, TFS, Opts);
   llvm::set_thread_name("clangd.main");
   int ExitCode = LSPServer.run()

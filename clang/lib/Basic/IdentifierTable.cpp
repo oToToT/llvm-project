@@ -31,6 +31,8 @@
 #include <cstring>
 #include <string>
 
+#include <iostream>
+
 using namespace clang;
 
 // A check to make sure the ObjCOrBuiltinID has sufficient room to store the
@@ -204,6 +206,7 @@ static void AddObjCKeyword(StringRef Name,
 /// AddKeywords - Add all keywords to the symbol table.
 ///
 void IdentifierTable::AddKeywords(const LangOptions &LangOpts) {
+  std::cerr << "IdentifierTable::AddKeywords, LangStd = " << LangStandard::getLangStandardForKind(LangOpts.LangStd).getDescription() << std::endl;
   // Add keywords and tokens for the current language.
 #define KEYWORD(NAME, FLAGS) \
   AddKeyword(StringRef(#NAME), tok::kw_ ## NAME,  \

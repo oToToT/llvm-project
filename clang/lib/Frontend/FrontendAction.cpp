@@ -34,6 +34,9 @@
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 #include <system_error>
+
+#include <iostream>
+
 using namespace clang;
 
 LLVM_INSTANTIATE_REGISTRY(FrontendPluginRegistry)
@@ -547,6 +550,7 @@ getInputBufferForModule(CompilerInstance &CI, Module *M) {
 
 bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
                                      const FrontendInputFile &RealInput) {
+  std::cerr << "FrontendAction::BeginSourceFile_ST with input =" << RealInput.getFile().str() << std::endl;
   FrontendInputFile Input(RealInput);
   assert(!Instance && "Already processing a source file!");
   assert(!Input.isEmpty() && "Unexpected empty filename!");
@@ -562,6 +566,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
   // If we're replaying the build of an AST file, import it and set up
   // the initial state from its build.
   if (ReplayASTFile) {
+    std::cerr << "FrontendAction_HAS_REPLAY_AST_FILE" << std::endl;
     IntrusiveRefCntPtr<DiagnosticsEngine> Diags(&CI.getDiagnostics());
 
     // The AST unit populates its own diagnostics engine rather than ours.
@@ -683,8 +688,10 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
       goto failure;
     }
   }
-  if (!CI.hasSourceManager())
+  if (!CI.hasSourceManager()) {
+    std::cerr << "TRY_CREATE_SOURCE_MANAGER" << std::endl;
     CI.createSourceManager(CI.getFileManager());
+  }
 
   // Set up embedding for any specified files. Do this before we load any
   // source files, including the primary module map for the compilation.
@@ -753,8 +760,10 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
 
   // Set up the preprocessor if needed. When parsing model files the
   // preprocessor of the original source is reused.
-  if (!isModelParsingAction())
+  if (!isModelParsingAction()) {
+    std::cerr << "TRY_CREATE_PREPROCESSOR" << std::endl;
     CI.createPreprocessor(getTranslationUnitKind());
+  }
 
   // Inform the diagnostic client we are processing a source file.
   CI.getDiagnosticClient().BeginSourceFile(CI.getLangOpts(),
@@ -924,7 +933,8 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
                      CI.getFrontendOpts().OverrideRecordLayoutsFile));
     CI.getASTContext().setExternalSource(Override);
   }
-
+  
+  std::cerr << "FrontendAction::BeginSourceFile_ED" << std::endl;
   return true;
 
   // If we failed, reset state since the client will not end up calling the
@@ -1035,6 +1045,7 @@ bool FrontendAction::shouldEraseOutputFiles() {
 //===----------------------------------------------------------------------===//
 
 void ASTFrontendAction::ExecuteAction() {
+  std::cerr << "AST_FRONTEND_ACTION_EXECUTE_ACTION_ST" << std::endl;
   CompilerInstance &CI = getCompilerInstance();
   if (!CI.hasPreprocessor())
     return;
@@ -1050,8 +1061,10 @@ void ASTFrontendAction::ExecuteAction() {
   if (CI.hasCodeCompletionConsumer())
     CompletionConsumer = &CI.getCodeCompletionConsumer();
 
-  if (!CI.hasSema())
+  if (!CI.hasSema()) {
+    std::cerr << "NOT_HAVING_SEMA_YET_CREATING" << std::endl;
     CI.createSema(getTranslationUnitKind(), CompletionConsumer);
+  }
 
   ParseAST(CI.getSema(), CI.getFrontendOpts().ShowStats,
            CI.getFrontendOpts().SkipFunctionBodies);

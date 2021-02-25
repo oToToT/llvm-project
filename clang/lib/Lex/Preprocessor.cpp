@@ -70,6 +70,8 @@
 #include <utility>
 #include <vector>
 
+#include <iostream>
+
 using namespace clang;
 
 LLVM_INSTANTIATE_REGISTRY(PragmaHandlerRegistry)
@@ -194,6 +196,9 @@ Preprocessor::~Preprocessor() {
 
 void Preprocessor::Initialize(const TargetInfo &Target,
                               const TargetInfo *AuxTarget) {
+  std::cerr << "PREPROCESSOR_INIT - TARGET=" << Target.getTriple().str();
+  if (AuxTarget) std::cerr << ",AUXTARGET=" << AuxTarget->getTriple().str() << std::endl;
+  else std::cerr << std::endl;
   assert((!this->Target || this->Target == &Target) &&
          "Invalid override of target information");
   this->Target = &Target;
@@ -720,8 +725,12 @@ IdentifierInfo *Preprocessor::LookUpIdentifierInfo(Token &Identifier) const {
   if (getLangOpts().MSVCCompat && II->isCPlusPlusOperatorKeyword() &&
       getSourceManager().isInSystemHeader(Identifier.getLocation()))
     Identifier.setKind(tok::identifier);
-  else
+  else {
+    std::cerr << "LookUpIdentifierInfo_SETKIND" << std::endl;
     Identifier.setKind(II->getTokenID());
+  }
+
+  std::cerr << "LookUpIdentifierInfo_DONE" << std::endl;
 
   return II;
 }
@@ -792,6 +801,7 @@ void Preprocessor::updateOutOfDateIdentifier(IdentifierInfo &II) const {
 /// IdentifierInfo methods that compute these properties will need to change to
 /// match.
 bool Preprocessor::HandleIdentifier(Token &Identifier) {
+  std::cerr << "Preprocessor::HandleIdentifier_ST" << std::endl;
   assert(Identifier.getIdentifierInfo() &&
          "Can't handle identifiers without identifier info!");
 
@@ -803,6 +813,7 @@ bool Preprocessor::HandleIdentifier(Token &Identifier) {
   // serialized with isPoisoned = true, but our preprocessor may have
   // unpoisoned it if we're defining a C99 macro.
   if (II.isOutOfDate()) {
+    std::cerr << "HANDLE_IDENTIFIER_IS_OUT_OF_DATE" << std::endl;
     bool CurrentIsPoisoned = false;
     const bool IsSpecialVariadicMacro =
         &II == Ident__VA_ARGS__ || &II == Ident__VA_OPT__;
@@ -884,6 +895,7 @@ bool Preprocessor::HandleIdentifier(Token &Identifier) {
 }
 
 void Preprocessor::Lex(Token &Result) {
+  std::cerr << "Preprocessor::Lex_ST" << std::endl;
   ++LexLevel;
 
   // We loop here until a lex function returns a token; this avoids recursion.
@@ -891,6 +903,7 @@ void Preprocessor::Lex(Token &Result) {
   do {
     switch (CurLexerKind) {
     case CLK_Lexer:
+      std::cerr << "Lex_TRY_CUR_LEXERRR" << std::endl;
       ReturnedToken = CurLexer->Lex(Result);
       break;
     case CLK_TokenLexer:

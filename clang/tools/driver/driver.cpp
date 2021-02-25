@@ -50,6 +50,9 @@
 #include <memory>
 #include <set>
 #include <system_error>
+
+#include <iostream>
+
 using namespace clang;
 using namespace clang::driver;
 using namespace llvm::opt;
@@ -497,6 +500,7 @@ int main(int Argc, const char **Argv) {
   SetBackdoorDriverOutputsFromEnvVars(TheDriver);
 
   if (!UseNewCC1Process) {
+    std::cerr << "NOT_USING_NEW_CC1_PROCESS_IN_MAIN" << std::endl;
     TheDriver.CC1Main = &ExecuteCC1Tool;
     // Ensure the CC1Command actually catches cc1 crashes
     llvm::CrashRecoveryContext::Enable();
@@ -577,5 +581,6 @@ int main(int Argc, const char **Argv) {
 
   // If we have multiple failing commands, we return the result of the first
   // failing command.
+  std::cerr << "MAIN_ENDED" << std::endl;
   return Res;
 }

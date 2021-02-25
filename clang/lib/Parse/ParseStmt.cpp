@@ -22,6 +22,8 @@
 #include "clang/Sema/TypoCorrection.h"
 #include "llvm/ADT/STLExtras.h"
 
+#include <iostream>
+
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -97,6 +99,7 @@ StmtResult
 Parser::ParseStatementOrDeclaration(StmtVector &Stmts,
                                     ParsedStmtContext StmtCtx,
                                     SourceLocation *TrailingElseLoc) {
+  std::cerr << "Parser::ParseStatementOrDeclaration_ST" << std::endl;
 
   ParenBraceBracketBalancer BalancerRAIIObj(*this);
 
@@ -159,6 +162,7 @@ private:
 StmtResult Parser::ParseStatementOrDeclarationAfterAttributes(
     StmtVector &Stmts, ParsedStmtContext StmtCtx,
     SourceLocation *TrailingElseLoc, ParsedAttributesWithRange &Attrs) {
+  std::cerr << "Parser::ParseStatementOrDeclarationAfterAttributes_ST" << std::endl;
   const char *SemiError = nullptr;
   StmtResult Res;
   SourceLocation GNUAttributeLoc;
@@ -240,6 +244,7 @@ Retry:
       return StmtError();
     }
 
+    std::cerr << "Parser::ParseStatementOrDeclarationAfterAttributes_TRY_ParseExprStatement" << std::endl;
     return ParseExprStatement(StmtCtx);
   }
 
@@ -447,6 +452,7 @@ Retry:
 
 /// Parse an expression statement.
 StmtResult Parser::ParseExprStatement(ParsedStmtContext StmtCtx) {
+  std::cerr << "Parser::ParseExprStatement_ST" << std::endl;
   // If a case keyword is missing, this is where it should be inserted.
   Token OldToken = Tok;
 
@@ -982,7 +988,6 @@ void Parser::ParseCompoundStatementLeadingPragmas() {
       break;
     }
   }
-
 }
 
 /// Consume any extra semi-colons resulting in null statements,
@@ -1039,6 +1044,7 @@ StmtResult Parser::handleExprStmt(ExprResult E, ParsedStmtContext StmtCtx) {
 /// consume the '}' at the end of the block.  It does not manipulate the scope
 /// stack.
 StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
+  std::cerr << "Parser::ParseCompoundStatementBody_ST, " << Tok.getName() << std::endl;
   PrettyStackTraceLoc CrashInfo(PP.getSourceManager(),
                                 Tok.getLocation(),
                                 "in compound statement ('{}')");
@@ -1056,7 +1062,10 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
 
   // Parse any pragmas at the beginning of the compound statement.
   ParseCompoundStatementLeadingPragmas();
+  std::cerr << "ParseCompoundStatementBody_AFTER_PARSE_COMPUND, " << Tok.getName() << std::endl;
+
   Actions.ActOnAfterCompoundStatementLeadingPragmas();
+  std::cerr << "ParseCompoundStatementBody_AFTER_ACT_ON_XXXX, " << Tok.getName() << std::endl;
 
   StmtVector Stmts;
 
@@ -1096,6 +1105,7 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
 
   while (!tryParseMisplacedModuleImport() && Tok.isNot(tok::r_brace) &&
          Tok.isNot(tok::eof)) {
+    std::cerr << "WHILE_NOT_tryParseMisplacedModuleImport_AND_TRIVIAL, " << Tok.getName() << std::endl;
     if (Tok.is(tok::annot_pragma_unused)) {
       HandlePragmaUnused();
       continue;
@@ -1106,6 +1116,7 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
 
     StmtResult R;
     if (Tok.isNot(tok::kw___extension__)) {
+      std::cerr << "ParseCompoundStatementBody_TRY_ParseStatementOrDeclaration" << std::endl;
       R = ParseStatementOrDeclaration(Stmts, SubStmtCtx);
     } else {
       // __extension__ can start declarations and it can also be a unary
@@ -1132,6 +1143,7 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
         R = Actions.ActOnDeclStmt(Res, DeclStart, DeclEnd);
       } else {
         // Otherwise this was a unary __extension__ marker.
+        std::cerr << "ParseCompoundStatementBody_TRY_ParseExpressionWithLeadingExtension" << std::endl;
         ExprResult Res(ParseExpressionWithLeadingExtension(ExtLoc));
 
         if (Res.isInvalid()) {
@@ -2260,6 +2272,7 @@ StmtResult Parser::ParsePragmaLoopHint(StmtVector &Stmts,
 }
 
 Decl *Parser::ParseFunctionStatementBody(Decl *Decl, ParseScope &BodyScope) {
+  std::cerr << "Parser::ParseFunctionStatementBody_ST" << std::endl; 
   assert(Tok.is(tok::l_brace));
   SourceLocation LBraceLoc = Tok.getLocation();
 

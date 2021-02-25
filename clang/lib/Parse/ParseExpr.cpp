@@ -30,6 +30,9 @@
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/TypoCorrection.h"
 #include "llvm/ADT/SmallVector.h"
+
+#include <iostream>
+
 using namespace clang;
 
 /// Simple precedence-based parser for binary/ternary operators.
@@ -121,6 +124,7 @@ using namespace clang;
 ///         expression ',' assignment-expression ...[opt]
 /// \endverbatim
 ExprResult Parser::ParseExpression(TypeCastState isTypeCast) {
+  std::cerr << "Parser::ParseExpression_ST" << std::endl;
   ExprResult LHS(ParseAssignmentExpression(isTypeCast));
   return ParseRHSOfBinaryExpression(LHS, prec::Comma);
 }
@@ -158,6 +162,7 @@ Parser::ParseExpressionWithLeadingExtension(SourceLocation ExtLoc) {
 
 /// Parse an expr that doesn't include (top-level) commas.
 ExprResult Parser::ParseAssignmentExpression(TypeCastState isTypeCast) {
+  std::cerr << "Parser::ParseAssignmentExpression_ST" << std::endl;
   if (Tok.is(tok::code_completion)) {
     cutOffParsing();
     Actions.CodeCompleteExpression(getCurScope(),
@@ -394,6 +399,7 @@ bool Parser::isFoldOperator(tok::TokenKind Kind) const {
 /// precedence of at least \p MinPrec.
 ExprResult
 Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
+  std::cerr << "Parser::ParseRHSOfBinaryExpression_ST" << std::endl;
   prec::Level NextTokPrec = getBinOpPrecedence(Tok.getKind(),
                                                GreaterThanIsOperator,
                                                getLangOpts().CPlusPlus11);
@@ -915,6 +921,7 @@ ExprResult Parser::ParseCastExpression(CastParseKind ParseKind,
                                        TypeCastState isTypeCast,
                                        bool isVectorLiteral,
                                        bool *NotPrimaryExpression) {
+  std::cerr << "Parser::ParseCastExpression_ST" << std::endl;
   ExprResult Res;
   tok::TokenKind SavedKind = Tok.getKind();
   auto SavedType = PreferredType;
@@ -1020,6 +1027,7 @@ ExprResult Parser::ParseCastExpression(CastParseKind ParseKind,
   case tok::annot_non_type:
   case tok::annot_non_type_dependent:
   case tok::annot_non_type_undeclared: {
+    std::cerr << "ParseCastExpression_ANNOT_NON_TYPE? " << Tok.getLocation().printToString(PP.getSourceManager()) << std::endl;
     CXXScopeSpec SS;
     Token Replacement;
     Res = tryParseCXXIdExpression(SS, isAddressOfOperand, Replacement);
@@ -1759,15 +1767,18 @@ ExprResult Parser::ParseCastExpression(CastParseKind ParseKind,
     NotCastExpr = true;
     return ExprError();
   }
+  std::cerr << "Parser::ParseCastExpression_AFTER_SWITCH" << std::endl;
 
   // Check to see whether Res is a function designator only. If it is and we
   // are compiling for OpenCL, we need to return an error as this implies
   // that the address of the function is being taken, which is illegal in CL.
 
-  if (ParseKind == PrimaryExprOnly)
+  if (ParseKind == PrimaryExprOnly) {
+    std::cerr << "Parser::ParseCastExpression_ED_PRIMARY_EXPR" << std::endl;
     // This is strictly a primary-expression - no postfix-expr pieces should be
     // parsed.
     return Res;
+  }
 
   if (!AllowSuffix) {
     // FIXME: Don't parse a primary-expression suffix if we encountered a parse
@@ -1819,6 +1830,7 @@ ExprResult Parser::ParseCastExpression(CastParseKind ParseKind,
       }
     }
 
+  std::cerr << "Parser::ParseCastExpression_ED" << std::endl;
   return Res;
 }
 
@@ -1844,6 +1856,7 @@ ExprResult Parser::ParseCastExpression(CastParseKind ParseKind,
 /// \endverbatim
 ExprResult
 Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
+  std::cerr << "Parser::ParsePostfixExpressionSuffix_ST" << std::endl;
   // Now that the primary-expression piece of the postfix-expression has been
   // parsed, see if there are any postfix-expression pieces here.
   SourceLocation Loc;
@@ -2090,6 +2103,7 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       PreferredType.enterMemAccess(Actions, Tok.getLocation(), OrigLHS);
 
       if (getLangOpts().CPlusPlus && !LHS.isInvalid()) {
+        std::cerr << "Parser::ParsePostfixExpressionSuffix_LHS_VALID" << std::endl;
         Expr *Base = OrigLHS;
         const Type* BaseType = Base->getType().getTypePtrOrNull();
         if (BaseType && Tok.is(tok::l_paren) &&
@@ -2101,9 +2115,11 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
           return ParsePostfixExpressionSuffix(Base);
         }
 
+        std::cerr << "Parser::ParsePostfixExpressionSuffix_TRY_ACT_ON_CXX_MEMBER" << std::endl;
         LHS = Actions.ActOnStartCXXMemberReference(getCurScope(), Base, OpLoc,
                                                    OpKind, ObjectType,
                                                    MayBePseudoDestructor);
+        std::cerr << "Parser::ParsePostfixExpressionSuffix_DONE_ACT_ON_CXX_MEMBER" << std::endl;
         if (LHS.isInvalid()) {
           // Clang will try to perform expression based completion as a
           // fallback, which is confusing in case of member references. So we
@@ -2119,6 +2135,7 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
             /*EnteringContext=*/false, &MayBePseudoDestructor);
         if (SS.isNotEmpty())
           ObjectType = nullptr;
+        std::cerr << "Parser::ParsePostfixExpressionSuffix_LHS_VALID_DONE" << std::endl;
       }
 
       if (Tok.is(tok::code_completion)) {
@@ -2216,6 +2233,7 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       break;
     }
   }
+  std::cerr << "Parser::ParsePostfixExpressionSuffix_ED" << std::endl;
 }
 
 /// ParseExprAfterUnaryExprOrTypeTrait - We parsed a typeof/sizeof/alignof/

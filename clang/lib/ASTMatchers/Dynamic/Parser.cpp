@@ -29,6 +29,8 @@
 #include <utility>
 #include <vector>
 
+#include <iostream>
+
 namespace clang {
 namespace ast_matchers {
 namespace dynamic {
@@ -824,7 +826,9 @@ static llvm::ManagedStatic<Parser::RegistrySema> DefaultRegistrySema;
 Parser::Parser(CodeTokenizer *Tokenizer, Sema *S,
                const NamedValueMap *NamedValues, Diagnostics *Error)
     : Tokenizer(Tokenizer), S(S ? S : &*DefaultRegistrySema),
-      NamedValues(NamedValues), Error(Error) {}
+      NamedValues(NamedValues), Error(Error) {
+        std::cerrr << "CONSTRUCT_PARSER_ST" << std::endl;
+      }
 
 Parser::RegistrySema::~RegistrySema() = default;
 

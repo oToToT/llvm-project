@@ -53,6 +53,8 @@
 #include <cstring>
 #include <type_traits>
 
+#include <iostream>
+
 using namespace clang;
 
 bool Qualifiers::isStrictSupersetOf(Qualifiers Other) const {
@@ -134,6 +136,7 @@ ArrayType::ArrayType(TypeClass tc, QualType et, QualType can,
                     ? TypeDependence::DependentInstantiation
                     : TypeDependence::None)),
       ElementType(et) {
+  std::cerr << "ArrayType::ArrayType_ST" << std::endl;
   ArrayTypeBits.IndexTypeQuals = tq;
   ArrayTypeBits.SizeModifier = sm;
 }

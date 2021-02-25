@@ -21,6 +21,8 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
 
+#include <iostream>
+
 namespace clang {
 namespace clangd {
 namespace {

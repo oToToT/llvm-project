@@ -38,6 +38,8 @@
 #include <mutex>
 #include <utility>
 
+#include <iostream>
+
 using namespace clang;
 
 namespace {
@@ -315,6 +317,7 @@ llvm::ErrorOr<PrecompiledPreamble> PrecompiledPreamble::Build(
     IntrusiveRefCntPtr<llvm::vfs::FileSystem> VFS,
     std::shared_ptr<PCHContainerOperations> PCHContainerOps, bool StoreInMemory,
     PreambleCallbacks &Callbacks) {
+  std::cerr << "PrecompiledPreamble::Build_ST" << std::endl;
   assert(VFS && "VFS is null");
 
   auto PreambleInvocation = std::make_shared<CompilerInvocation>(Invocation);
@@ -374,7 +377,31 @@ llvm::ErrorOr<PrecompiledPreamble> PrecompiledPreamble::Build(
   //
   // FIXME: We shouldn't need to do this, the target should be immutable once
   // created. This complexity should be lifted elsewhere.
+  // Create TargetInfo for the other side of CUDA/OpenMP/SYCL compilation.
+  if ((Clang->getLangOpts().CUDA || Clang->getLangOpts().OpenMPIsDevice ||
+       Clang->getLangOpts().SYCLIsDevice) &&
+      !Clang->getFrontendOpts().AuxTriple.empty()) {
+    auto TO = std::make_shared<TargetOptions>();
+    TO->Triple = llvm::Triple::normalize(Clang->getFrontendOpts().AuxTriple);
+    if (Clang->getFrontendOpts().AuxTargetCPU)
+      TO->CPU = Clang->getFrontendOpts().AuxTargetCPU.getValue();
+    if (Clang->getFrontendOpts().AuxTargetFeatures)
+      TO->FeaturesAsWritten = Clang->getFrontendOpts().AuxTargetFeatures.getValue();
+    TO->HostTriple = Clang->getTarget().getTriple().str();
+    Clang->setAuxTarget(TargetInfo::CreateTargetInfo(Clang->getDiagnostics(), TO));
+  }
+
+  // Inform the target of the language options.
+  //
+  // FIXME: We shouldn't need to do this, the target should be immutable once
+  // created. This complexity should be lifted elsewhere.
   Clang->getTarget().adjust(Clang->getLangOpts());
+
+  // Adjust target options based on codegen options.
+  Clang->getTarget().adjustTargetOptions(Clang->getCodeGenOpts(), Clang->getTargetOpts());
+
+  if (auto *Aux = Clang->getAuxTarget())
+    Clang->getTarget().setAuxTarget(Aux);
 
   if (Clang->getFrontendOpts().Inputs.size() != 1 ||
       Clang->getFrontendOpts().Inputs[0].getKind().getFormat() !=

@@ -53,6 +53,8 @@
 #include <time.h>
 #include <utility>
 
+#include <iostream>
+
 using namespace clang;
 
 CompilerInstance::CompilerInstance(
@@ -62,7 +64,9 @@ CompilerInstance::CompilerInstance(
       Invocation(new CompilerInvocation()),
       ModuleCache(SharedModuleCache ? SharedModuleCache
                                     : new InMemoryModuleCache),
-      ThePCHContainerOperations(std::move(PCHContainerOps)) {}
+      ThePCHContainerOperations(std::move(PCHContainerOps)) {
+        std::cerr << "CompilerInstance_CONSTRUCT:" << hasPreprocessor() << std::endl;
+      }
 
 CompilerInstance::~CompilerInstance() {
   assert(OutputFiles.empty() && "Still output files in flight?");
@@ -169,6 +173,7 @@ void CompilerInstance::setASTContext(ASTContext *Value) {
 }
 
 void CompilerInstance::setSema(Sema *S) {
+  std::cerr << "CompilerInstance::setSema_CALLED" << std::endl;
   TheSema.reset(S);
 }
 
@@ -435,6 +440,7 @@ static void InitializeFileRemapping(DiagnosticsEngine &Diags,
 // Preprocessor
 
 void CompilerInstance::createPreprocessor(TranslationUnitKind TUKind) {
+  std::cerr << "CompilerInstance::createPreprocessor_ST" << std::endl;
   const PreprocessorOptions &PPOpts = getPreprocessorOpts();
 
   // The AST reader holds a reference to the old preprocessor (if any).
@@ -683,6 +689,7 @@ CompilerInstance::createCodeCompletionConsumer(Preprocessor &PP,
 
 void CompilerInstance::createSema(TranslationUnitKind TUKind,
                                   CodeCompleteConsumer *CompletionConsumer) {
+  std::cerr << "CompilerInstance::createSema_ST" << std::endl;
   TheSema.reset(new Sema(getPreprocessor(), getASTContext(), getASTConsumer(),
                          TUKind, CompletionConsumer));
   // Attach the external sema source if there is any.

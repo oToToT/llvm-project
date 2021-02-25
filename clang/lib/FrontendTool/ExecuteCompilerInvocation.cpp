@@ -30,6 +30,9 @@
 #include "llvm/Support/BuryPointer.h"
 #include "llvm/Support/DynamicLibrary.h"
 #include "llvm/Support/ErrorHandling.h"
+
+#include <iostream>
+
 using namespace clang;
 using namespace llvm::opt;
 
@@ -185,6 +188,7 @@ CreateFrontendAction(CompilerInstance &CI) {
 }
 
 bool ExecuteCompilerInvocation(CompilerInstance *Clang) {
+  std::cerr << "ExecuteCompilerInvocation_ST" << std::endl;
   // Honor -help.
   if (Clang->getFrontendOpts().ShowHelp) {
     driver::getDriverOptTable().PrintHelp(
@@ -278,6 +282,7 @@ bool ExecuteCompilerInvocation(CompilerInstance *Clang) {
   bool Success = Clang->ExecuteAction(*Act);
   if (Clang->getFrontendOpts().DisableFree)
     llvm::BuryPointer(std::move(Act));
+  std::cerr << "ExecuteCompilerInvocation_ED" << std::endl;
   return Success;
 }
 

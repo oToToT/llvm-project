@@ -26,6 +26,8 @@
 #include <cstdio>
 #include <memory>
 
+#include <iostream>
+
 using namespace clang;
 
 namespace {
@@ -112,6 +114,7 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer,
 }
 
 void clang::ParseAST(Sema &S, bool PrintStats, bool SkipFunctionBodies) {
+  std::cerr << "PARSE_AST_ST" << std::endl;
   // Collect global stats on Decls/Stmts (until we have a module streamer).
   if (PrintStats) {
     Decl::EnableStatistics();

@@ -49,6 +49,8 @@
 #include <string>
 #include <vector>
 
+#include <iostream>
+
 namespace clang {
 namespace clangd {
 namespace {
@@ -444,6 +446,7 @@ static std::vector<llvm::StringRef> semanticTokenModifiers() {
 
 void ClangdLSPServer::onInitialize(const InitializeParams &Params,
                                    Callback<llvm::json::Value> Reply) {
+  std::cerr << "CLANGD_LSP_SERVER_ON_INITIALIZE_ST" << std::endl;
   // Determine character encoding first as it affects constructed ClangdServer.
   if (Params.capabilities.offsetEncoding && !Opts.Encoding) {
     Opts.Encoding = OffsetEncoding::UTF16; // fallback
@@ -1420,6 +1423,7 @@ ClangdLSPServer::ClangdLSPServer(Transport &Transp, const ThreadsafeFS &TFS,
       MsgHandler(new MessageHandler(*this)), TFS(TFS),
       SupportedSymbolKinds(defaultSymbolKinds()),
       SupportedCompletionItemKinds(defaultCompletionItemKinds()), Opts(Opts) {
+  std::cerr << "CLANGD_LSP_SERVER_CONSTRUCTOR_ST" << std::endl;
   if (Opts.ConfigProvider) {
     assert(!Opts.ContextProvider &&
            "Only one of ConfigProvider and ContextProvider allowed!");

@@ -29,6 +29,8 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
 
+#include <iostream>
+
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -1949,6 +1951,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
                                               DeclaratorContext Context,
                                               SourceLocation *DeclEnd,
                                               ForRangeInit *FRI) {
+  std::cerr << "Parser::ParseDeclGroup_ST" << std::endl;
   // Parse the first declarator.
   ParsingDeclarator D(*this, DS, Context);
   ParseDeclarator(D);
@@ -2014,6 +2017,8 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
             DS.ClearStorageClassSpecs();
           }
 
+          std::cerr << "Parser::ParseDeclGroup_IS_FUN_DEFINTION" << std::endl;
+
           Decl *TheDecl = ParseFunctionDefinition(D, ParsedTemplateInfo(),
                                                   &LateParsedAttrs);
           return Actions.ConvertDeclToDeclGroup(TheDecl);
@@ -2040,6 +2045,8 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
       }
     }
   }
+
+  std::cerr << "Parser::ParseDeclGroup_NOT_FUN_DEFINTION" << std::endl;
 
   if (ParseAsmAttributesAfterDeclarator(D))
     return nullptr;

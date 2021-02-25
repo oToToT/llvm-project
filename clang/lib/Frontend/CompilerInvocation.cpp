@@ -100,6 +100,9 @@
 #include <utility>
 #include <vector>
 
+#include <iostream>
+#include <cstdio>
+
 using namespace clang;
 using namespace driver;
 using namespace options;
@@ -427,6 +430,7 @@ static const StringRef GetInputKindName(InputKind IK);
 static bool FixupInvocation(CompilerInvocation &Invocation,
                             DiagnosticsEngine &Diags, const ArgList &Args,
                             InputKind IK) {
+  std::cerr << "FIXUP_INVOCATION_ST" << std::endl;
   unsigned NumErrorsBefore = Diags.getNumErrors();
 
   LangOptions &LangOpts = *Invocation.getLangOpts();
@@ -501,15 +505,18 @@ static bool FixupInvocation(CompilerInvocation &Invocation,
     emitError |= (DefaultCC == LangOptions::DCC_VectorCall ||
                   DefaultCC == LangOptions::DCC_RegCall) &&
                  !T.isX86();
-    if (emitError)
+    if (emitError) {
+      std::cerr << "ERR_DRV_EMIT_IS_HERE" << std::endl;
       Diags.Report(diag::err_drv_argument_not_allowed_with)
           << A->getSpelling() << T.getTriple();
+    }
   }
 
   if (!CodeGenOpts.ProfileRemappingFile.empty() && CodeGenOpts.LegacyPassManager)
     Diags.Report(diag::err_drv_argument_only_allowed_with)
         << Args.getLastArg(OPT_fprofile_remapping_file_EQ)->getAsString(Args)
         << "-fno-legacy-pass-manager";
+  std::cerr << "FIXUP_INVOCATION_ED" << std::endl;
 
   return Diags.getNumErrors() == NumErrorsBefore;
 }
@@ -4273,6 +4280,9 @@ static bool ParseTargetArgs(TargetOptions &Opts, ArgList &Args,
 bool CompilerInvocation::CreateFromArgsImpl(
     CompilerInvocation &Res, ArrayRef<const char *> CommandLineArgs,
     DiagnosticsEngine &Diags, const char *Argv0) {
+  std::cerr << "CompilerInvocation::CreateFromArgsImpl_ST" << std::endl;
+  std::cerr << "CREATE_FROM_ARGS_ARGV0 = " << Argv0 << std::endl;
+  std::cerr << "CREATE_FROM_ARGS_COMMAND_LINE_ARGS = " << CommandLineArgs.size() << std::endl;
   bool Success = true;
 
   // Parse the arguments.
@@ -4283,6 +4293,7 @@ bool CompilerInvocation::CreateFromArgsImpl(
                                      MissingArgCount, IncludedFlagsBitmask);
   LangOptions &LangOpts = *Res.getLangOpts();
 
+  for (unsigned i=0;i < Args.getNumInputArgStrings() && Args.getArgString(i)!=nullptr;++i) std::cerr << "CREATE_FROM_ARG_INPUT_ARG_LISTS = " << Args.getArgString(i) << std::endl;
   // Check for missing argument error.
   if (MissingArgCount) {
     Diags.Report(diag::err_drv_missing_argument)
@@ -4386,8 +4397,10 @@ bool CompilerInvocation::CreateFromArgsImpl(
   Res.getCodeGenOpts().Argv0 = Argv0;
   Res.getCodeGenOpts().CommandLineArgs = CommandLineArgs;
 
+  std::cerr << "TRY_FIX_UP_INVOCATION" << std::endl;
   Success &= FixupInvocation(Res, Diags, Args, DashX);
 
+  std::cerr << "CompilerInvocation::CreateFromArgs_ED" << std::endl;
   return Success;
 }
 

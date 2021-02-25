@@ -35,6 +35,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cstring>
+#include <iostream>
 using namespace clang;
 
 const Expr *Expr::getBestDynamicClassTypeExpr() const {
@@ -403,20 +404,20 @@ DeclRefExpr::DeclRefExpr(const ASTContext &Ctx,
                          QualType T, ExprValueKind VK, NonOdrUseReason NOUR)
     : Expr(DeclRefExprClass, T, VK, OK_Ordinary), D(D),
       DNLoc(NameInfo.getInfo()) {
+  std::cerr << "DeclRefExpr::DeclRefExpr_ST" << std::endl;
   DeclRefExprBits.Loc = NameInfo.getLoc();
   DeclRefExprBits.HasQualifier = QualifierLoc ? 1 : 0;
   if (QualifierLoc)
     new (getTrailingObjects<NestedNameSpecifierLoc>())
         NestedNameSpecifierLoc(QualifierLoc);
   DeclRefExprBits.HasFoundDecl = FoundD ? 1 : 0;
-  if (FoundD)
-    *getTrailingObjects<NamedDecl *>() = FoundD;
   DeclRefExprBits.HasTemplateKWAndArgsInfo
     = (TemplateArgs || TemplateKWLoc.isValid()) ? 1 : 0;
   DeclRefExprBits.RefersToEnclosingVariableOrCapture =
       RefersToEnclosingVariableOrCapture;
   DeclRefExprBits.NonOdrUseReason = NOUR;
   if (TemplateArgs) {
+    std::cerr << "DeclRefExpr_IS_TEMPLATE_ARGS" << std::endl;
     auto Deps = TemplateArgumentDependence::None;
     getTrailingObjects<ASTTemplateKWAndArgsInfo>()->initializeFrom(
         TemplateKWLoc, *TemplateArgs, getTrailingObjects<TemplateArgumentLoc>(),
@@ -424,11 +425,13 @@ DeclRefExpr::DeclRefExpr(const ASTContext &Ctx,
     assert(!(Deps & TemplateArgumentDependence::Dependent) &&
            "built a DeclRefExpr with dependent template args");
   } else if (TemplateKWLoc.isValid()) {
+    std::cerr << "DeclRefExpr_TEMPLATE_KW_LOC_VALID" << std::endl;
     getTrailingObjects<ASTTemplateKWAndArgsInfo>()->initializeFrom(
         TemplateKWLoc);
   }
   DeclRefExprBits.HadMultipleCandidates = 0;
   setDependence(computeDependence(this, Ctx));
+  std::cerr << "DeclRefExpr::DeclRefExpr_ED" << std::endl;
 }
 
 DeclRefExpr *DeclRefExpr::Create(const ASTContext &Context,
@@ -454,6 +457,7 @@ DeclRefExpr *DeclRefExpr::Create(const ASTContext &Context,
                                  NamedDecl *FoundD,
                                  const TemplateArgumentListInfo *TemplateArgs,
                                  NonOdrUseReason NOUR) {
+  std::cerr << "DeclRefExpr::Create_ST" << std::endl;
   // Filter out cases where the found Decl is the same as the value refenenced.
   if (D == FoundD)
     FoundD = nullptr;

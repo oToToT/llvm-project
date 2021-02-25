@@ -23,6 +23,7 @@
 #include "clang/Sema/Scope.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <numeric>
+#include <iostream>
 
 using namespace clang;
 
@@ -155,6 +156,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(
     CXXScopeSpec &SS, ParsedType ObjectType, bool ObjectHadErrors,
     bool EnteringContext, bool *MayBePseudoDestructor, bool IsTypename,
     IdentifierInfo **LastII, bool OnlyNamespace, bool InUsingDeclaration) {
+  std::cerr << "Parser::ParseOptionalCXXScopeSpecifier_ST" << std::endl;
   assert(getLangOpts().CPlusPlus &&
          "Call sites of this function should be guarded by checking for C++");
 
@@ -475,6 +477,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(
     // nested-name-specifier:
     //   type-name '<'
     if (Next.is(tok::less)) {
+      std::cerr << "Parser::ParseOptionalCXXScopeSpecifier_NEXT_LESS" << std::endl;
 
       TemplateTy Template;
       UnqualifiedId TemplateName;
@@ -487,6 +490,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(
                                                         EnteringContext,
                                                         Template,
                                               MemberOfUnknownSpecialization)) {
+        std::cerr << "Parser::ParseOptionalCXXScopeSpecifier_IS_TEMPLATE_NAME" << std::endl;
         // If lookup didn't find anything, we treat the name as a template-name
         // anyway. C++20 requires this, and in prior language modes it improves
         // error recovery. But before we commit to this, check that we actually
@@ -551,17 +555,20 @@ bool Parser::ParseOptionalCXXScopeSpecifier(
   if (CheckForDestructor && !HasScopeSpecifier && Tok.is(tok::tilde))
     *MayBePseudoDestructor = true;
 
+  std::cerr << "Parser::ParseOptionalCXXScopeSpecifier_ED" << std::endl;
   return false;
 }
 
 ExprResult Parser::tryParseCXXIdExpression(CXXScopeSpec &SS,
                                            bool isAddressOfOperand,
                                            Token &Replacement) {
+  std::cerr << "Parser::tryParseCXXIdExpression_ST" << std::endl;
   ExprResult E;
 
   // We may have already annotated this id-expression.
   switch (Tok.getKind()) {
   case tok::annot_non_type: {
+    std::cerr << "Parser::tryParseCXXIdExpression_annot_non_type" << std::endl;
     NamedDecl *ND = getNonTypeAnnotation(Tok);
     SourceLocation Loc = ConsumeAnnotationToken();
     E = Actions.ActOnNameClassifiedAsNonType(getCurScope(), SS, ND, Loc, Tok);
@@ -569,6 +576,7 @@ ExprResult Parser::tryParseCXXIdExpression(CXXScopeSpec &SS,
   }
 
   case tok::annot_non_type_dependent: {
+    std::cerr << "tryParseCXXIdExpression_annot_non_type_dependent" << std::endl;
     IdentifierInfo *II = getIdentifierAnnotation(Tok);
     SourceLocation Loc = ConsumeAnnotationToken();
 
@@ -583,6 +591,7 @@ ExprResult Parser::tryParseCXXIdExpression(CXXScopeSpec &SS,
   }
 
   case tok::annot_non_type_undeclared: {
+    std::cerr << "Parser::tryParseCXXIdExpression_annot_non_type_undeclared" << std::endl;
     assert(SS.isEmpty() &&
            "undeclared non-type annotation should be unqualified");
     IdentifierInfo *II = getIdentifierAnnotation(Tok);
@@ -616,6 +625,7 @@ ExprResult Parser::tryParseCXXIdExpression(CXXScopeSpec &SS,
 
   if (!E.isInvalid() && !E.isUnset() && Tok.is(tok::less))
     checkPotentialAngleBracket(E);
+  std::cerr << "Parser::tryParseCXXIdExpression_ED" << std::endl;
   return E;
 }
 

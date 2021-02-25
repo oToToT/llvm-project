@@ -18,6 +18,8 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Frontend/OpenMP/OMPGridValues.h"
 
+#include <iostream>
+
 using namespace clang;
 using namespace clang::targets;
 
@@ -259,6 +261,7 @@ void NVPTXTargetInfo::getTargetDefines(const LangOptions &Opts,
 }
 
 ArrayRef<Builtin::Info> NVPTXTargetInfo::getTargetBuiltins() const {
+  std::cerr << "NVPTXTargetInfo::getTargetBuiltins" << std::endl;
   return llvm::makeArrayRef(BuiltinInfo, clang::NVPTX::LastTSBuiltin -
                                              Builtin::FirstTSBuiltin);
 }

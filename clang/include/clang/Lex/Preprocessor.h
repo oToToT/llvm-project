@@ -55,6 +55,8 @@
 #include <utility>
 #include <vector>
 
+#include <iostream>
+
 namespace llvm {
 
 template<unsigned InternalLen> class SmallString;
@@ -1203,6 +1205,7 @@ public:
   /// Return information about the specified preprocessor
   /// identifier token.
   IdentifierInfo *getIdentifierInfo(StringRef Name) const {
+    std::cerr << "getIdentifierInfo_WITH" << Name.str() << std::endl;
     return &Identifiers.get(Name);
   }
 

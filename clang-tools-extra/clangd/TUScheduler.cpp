@@ -90,6 +90,8 @@
 #include <utility>
 #include <vector>
 
+#include <iostream>
+
 namespace clang {
 namespace clangd {
 using std::chrono::steady_clock;
@@ -360,6 +362,7 @@ public:
   /// will be built.
   void update(std::unique_ptr<CompilerInvocation> CI, ParseInputs PI,
               std::vector<Diag> CIDiags, WantDiagnostics WantDiags) {
+    std::cerr << "PREAMBLE_THREAD_UPDATE_ST" << std::endl;
     Request Req = {std::move(CI), std::move(PI), std::move(CIDiags), WantDiags,
                    Context::current().clone()};
     if (RunSync) {
@@ -711,6 +714,7 @@ ASTWorker::create(PathRef FileName, const GlobalCompilationDatabase &CDB,
                   AsyncTaskRunner *Tasks, Semaphore &Barrier,
                   const TUScheduler::Options &Opts,
                   ParsingCallbacks &Callbacks) {
+  std::cerr << "AST_WORKER_CREATE_ST" << std::endl;
   std::shared_ptr<ASTWorker> Worker(
       new ASTWorker(FileName, CDB, IdleASTs, HeaderIncluders, Barrier,
                     /*RunSync=*/!Tasks, Opts, Callbacks));
@@ -755,6 +759,7 @@ ASTWorker::~ASTWorker() {
 
 void ASTWorker::update(ParseInputs Inputs, WantDiagnostics WantDiags,
                        bool ContentChanged) {
+  std::cerr << "AST_WORKER_UPDATEE_ST" << std::endl;
   std::string TaskName = llvm::formatv("Update ({0})", Inputs.Version);
   auto Task = [=]() mutable {
     // Get the actual command as `Inputs` does not have a command.
@@ -780,8 +785,11 @@ void ASTWorker::update(ParseInputs Inputs, WantDiagnostics WantDiags,
     }
     if (Cmd)
       Inputs.CompileCommand = std::move(*Cmd);
-    else
+    else {
+      // FIXME: consider using old command if it's not a fallback one.
       Inputs.CompileCommand = CDB.getFallbackCommand(FileName);
+      for (auto a: Inputs.CompileCommand.CommandLine) std::cerr << "CDB_CREATE_COMMAND: " << a << std::endl;
+    }
 
     bool InputsAreTheSame =
         std::tie(FileInputs.CompileCommand, FileInputs.Contents) ==
@@ -837,6 +845,7 @@ void ASTWorker::update(ParseInputs Inputs, WantDiagnostics WantDiags,
       return;
     }
 
+    std::cerr << "TRY_UPDATE_PreamblePeer" << std::endl;
     PreamblePeer.update(std::move(Invocation), std::move(Inputs),
                         std::move(CompilerInvocationDiags), WantDiags);
     std::unique_lock<std::mutex> Lock(Mutex);
@@ -858,6 +867,7 @@ void ASTWorker::runWithAST(
     llvm::StringRef Name,
     llvm::unique_function<void(llvm::Expected<InputsAndAST>)> Action,
     TUScheduler::ASTActionInvalidation Invalidation) {
+  std::cerr << "RUN_WITH_AST_ST" << std::endl;
   // Tracks ast cache accesses for read operations.
   static constexpr trace::Metric ASTAccessForRead(
       "ast_access_read", trace::Metric::Counter, "result");
@@ -878,6 +888,7 @@ void ASTWorker::runWithAST(
       // return a compatible preamble as ASTWorker::update blocks.
       llvm::Optional<ParsedAST> NewAST;
       if (Invocation) {
+        std::cerr << "TRY_CREATE_NEW_AST" << std::endl;
         NewAST = ParsedAST::build(FileName, FileInputs, std::move(Invocation),
                                   CompilerInvocationDiagConsumer.take(),
                                   getPossiblyStalePreamble());
@@ -899,6 +910,8 @@ void ASTWorker::runWithAST(
 }
 
 void PreambleThread::build(Request Req) {
+  std::cerr << "PREAMBLE_THREAD_BUILD_ST" << std::endl;
+  for (auto a: Req.Inputs.CompileCommand.CommandLine) std::cerr << "PREAMBLE_THREAD_BUILD_COMMAND: " << a << std::endl;
   assert(Req.CI && "Got preamble request with null compiler invocation");
   const ParseInputs &Inputs = Req.Inputs;
 
@@ -906,6 +919,8 @@ void PreambleThread::build(Request Req) {
     Status.PreambleActivity = PreambleAction::Building;
   });
   auto _ = llvm::make_scope_exit([this, &Req] {
+    std::cerr << "TRY_SCOPE_EXIT_UPDATE_PREAMBLE" << std::endl;
+    for (auto a: Req.Inputs.CompileCommand.CommandLine) std::cerr << "SCOPE_EXIT_COMMAND: " << a << std::endl;
     ASTPeer.updatePreamble(std::move(Req.CI), std::move(Req.Inputs),
                            LatestBuild, std::move(Req.CIDiags),
                            std::move(Req.WantDiags));
@@ -924,6 +939,7 @@ void PreambleThread::build(Request Req) {
          FileName, Inputs.Version, LatestBuild->Version);
   }
 
+  std::cerr << "TRY_BUILD_PREAMBLE" << std::endl;
   LatestBuild = clang::clangd::buildPreamble(
       FileName, *Req.CI, Inputs, StoreInMemory,
       [this, Version(Inputs.Version)](ASTContext &Ctx,
@@ -1488,6 +1504,7 @@ bool TUScheduler::blockUntilIdle(Deadline D) const {
 
 bool TUScheduler::update(PathRef File, ParseInputs Inputs,
                          WantDiagnostics WantDiags) {
+  std::cerr << "TU_SCHEDULER_UPDATE_ST" << std::endl;
   std::unique_ptr<FileData> &FD = Files[File];
   bool NewFile = FD == nullptr;
   bool ContentChanged = false;

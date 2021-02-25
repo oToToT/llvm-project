@@ -47,6 +47,8 @@
 #include <tuple>
 #include <utility>
 
+#include <iostream>
+
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -1640,6 +1642,7 @@ bool Lexer::tryConsumeIdentifierUTF8Char(const char *&CurPtr) {
 }
 
 bool Lexer::LexIdentifier(Token &Result, const char *CurPtr) {
+  std::cerr << "LEXER_LexIdentifier_ST" << std::endl;
   // Match [_A-Za-z0-9]*, we have already matched [_A-Za-z$]
   unsigned Size;
   unsigned char C = *CurPtr++;
@@ -1656,6 +1659,7 @@ bool Lexer::LexIdentifier(Token &Result, const char *CurPtr) {
   if (isASCII(C) && C != '\\' && C != '?' &&
       (C != '$' || !LangOpts.DollarIdents)) {
 FinishIdentifier:
+    std::cerr << "FINISH_IDENTIFIER_WITH" << std::endl;
     const char *IdStart = BufferPtr;
     FormTokenWithChars(Result, CurPtr, tok::raw_identifier);
     Result.setRawIdentifierData(IdStart);
@@ -3164,6 +3168,7 @@ void Lexer::PropagateLineStartLeadingSpaceInfo(Token &Result) {
 }
 
 bool Lexer::Lex(Token &Result) {
+  std::cerr << "LEXER_LEX_ST" << std::endl;
   // Start a new token.
   Result.startToken();
 
@@ -3199,6 +3204,7 @@ bool Lexer::Lex(Token &Result) {
 /// token, not a normal token, as such, it is an internal interface.  It assumes
 /// that the Flags of result have been cleared before calling this.
 bool Lexer::LexTokenInternal(Token &Result, bool TokAtPhysicalStartOfLine) {
+  std::cerr << "LEXER_LexTokenInternal_ST" << std::endl;
 LexNextToken:
   // New token, can't need cleaning yet.
   Result.clearFlag(Token::NeedsCleaning);
@@ -3217,6 +3223,7 @@ LexNextToken:
     // skipped.  The next lexer invocation will return the token after the
     // whitespace.
     if (isKeepWhitespaceMode()) {
+      std::cerr << "KEEP_WHITESPACE_MODE" << std::endl;
       FormTokenWithChars(Result, CurPtr, tok::unknown);
       // FIXME: The next token will not have LeadingSpace set.
       return true;

@@ -49,6 +49,9 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/SaveAndRestore.h"
+
+#include <iostream>
+
 using namespace clang;
 using namespace sema;
 using llvm::RoundingMode;
@@ -2019,6 +2022,7 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, ExprValueKind VK,
                        NestedNameSpecifierLoc NNS, NamedDecl *FoundD,
                        SourceLocation TemplateKWLoc,
                        const TemplateArgumentListInfo *TemplateArgs) {
+  std::cerr << "Sema::BuildDeclRefExpr_ST" << std::endl;
   bool RefersToCapturedVariable =
       isa<VarDecl>(D) &&
       NeedToCaptureVariable(cast<VarDecl>(D), NameInfo.getLoc());
@@ -2068,6 +2072,7 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, ExprValueKind VK,
     if (auto *BE = BD->getBinding())
       E->setObjectKind(BE->getObjectKind());
 
+  std::cerr << "Sema::BuildDeclRefExpr_ED" << std::endl;
   return E;
 }
 
@@ -3157,6 +3162,7 @@ static bool ShouldLookupResultBeMultiVersionOverload(const LookupResult &R) {
 ExprResult Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
                                           LookupResult &R, bool NeedsADL,
                                           bool AcceptInvalidDecl) {
+  std::cerr << "Sema::BuildDeclarationNameExpr_ST" << std::endl;
   // If this is a single, fully-resolved result and we don't need ADL,
   // just build an ordinary singleton decl ref.
   if (!NeedsADL && R.isSingleResult() &&
@@ -3178,6 +3184,7 @@ ExprResult Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
   // we've picked a target.
   R.suppressDiagnostics();
 
+  std::cerr << "BuildDeclarationNameExpr_try_BUILD_UNRESOLVED" << std::endl;
   UnresolvedLookupExpr *ULE
     = UnresolvedLookupExpr::Create(Context, R.getNamingClass(),
                                    SS.getWithLocInContext(Context),
@@ -3185,6 +3192,7 @@ ExprResult Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
                                    NeedsADL, R.isOverloadedResult(),
                                    R.begin(), R.end());
 
+  std::cerr << "Sema::BuildDeclarationNameExpr_ED" << std::endl;
   return ULE;
 }
 
@@ -3197,6 +3205,7 @@ ExprResult Sema::BuildDeclarationNameExpr(
     const CXXScopeSpec &SS, const DeclarationNameInfo &NameInfo, NamedDecl *D,
     NamedDecl *FoundD, const TemplateArgumentListInfo *TemplateArgs,
     bool AcceptInvalidDecl) {
+  std::cerr << "Complete_BuildDeclarationNameExpr_ST" << std::endl;
   assert(D && "Cannot refer to a NULL declaration");
   assert(!isa<FunctionTemplateDecl>(D) &&
          "Cannot refer unambiguously to a function template");
@@ -3208,6 +3217,7 @@ ExprResult Sema::BuildDeclarationNameExpr(
   if (TemplateDecl *Template = dyn_cast<TemplateDecl>(D)) {
     // Specifically diagnose references to class templates that are missing
     // a template argument list.
+    std::cerr << "BuildDeclarationNameExpr_TRY_DIAG_MISSING_TEMPLATE_ARG" << std::endl;
     diagnoseMissingTemplateArguments(TemplateName(Template), Loc);
     return ExprError();
   }
@@ -3440,6 +3450,7 @@ ExprResult Sema::BuildDeclarationNameExpr(
       break;
     }
 
+    std::cerr << "BuildDeclarationNameExpr_TRY_BUILD_DECL_REF_EXPR" << std::endl;
     return BuildDeclRefExpr(VD, type, valueKind, NameInfo, &SS, FoundD,
                             /*FIXME: TemplateKWLoc*/ SourceLocation(),
                             TemplateArgs);

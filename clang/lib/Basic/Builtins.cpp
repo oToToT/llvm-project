@@ -15,6 +15,9 @@
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/StringRef.h"
+
+#include <iostream>
+
 using namespace clang;
 
 static const Builtin::Info BuiltinInfo[] = {
@@ -29,6 +32,7 @@ static const Builtin::Info BuiltinInfo[] = {
 };
 
 const Builtin::Info &Builtin::Context::getRecord(unsigned ID) const {
+  std::cerr << "BUILTIN_GET_RECORD_WITH_ID = " << ID << std::endl;
   if (ID < Builtin::FirstTSBuiltin)
     return BuiltinInfo[ID];
   assert(((ID - Builtin::FirstTSBuiltin) <

@@ -37,6 +37,8 @@
 #include <utility>
 #include <vector>
 
+#include <iostream>
+
 namespace clang {
 namespace tooling {
 
@@ -46,7 +48,10 @@ struct CompileCommand {
   CompileCommand(const Twine &Directory, const Twine &Filename,
                  std::vector<std::string> CommandLine, const Twine &Output)
       : Directory(Directory.str()), Filename(Filename.str()),
-        CommandLine(std::move(CommandLine)), Output(Output.str()) {}
+        CommandLine(std::move(CommandLine)), Output(Output.str()) {
+          std::cerr << "CONSTRUCT_COMPILE_COMMAND_ST" << std::endl;
+          for (auto a: this->CommandLine) std::cerr << "COMPILE_COMMAND_CONSTRUCT_CMDLINE: " << a << std::endl;
+        }
 
   /// The working directory the command was executed from.
   std::string Directory;

@@ -29,6 +29,8 @@
 #include <system_error>
 #include <utility>
 
+#include <iostream>
+
 using namespace clang;
 using namespace driver;
 using namespace llvm::opt;
@@ -38,6 +40,7 @@ Compilation::Compilation(const Driver &D, const ToolChain &_DefaultToolChain,
                          bool ContainsError)
     : TheDriver(D), DefaultToolChain(_DefaultToolChain), Args(_Args),
       TranslatedArgs(_TranslatedArgs), ContainsError(ContainsError) {
+  std::cerr << "Create Compilation" << std::endl;
   // The offloading host toolchain is the default toolchain.
   OrderedOffloadingToolchains.insert(
       std::make_pair(Action::OFK_Host, &DefaultToolChain));
@@ -163,6 +166,7 @@ bool Compilation::CleanupFileMap(const ArgStringMap &Files,
 
 int Compilation::ExecuteCommand(const Command &C,
                                 const Command *&FailingCommand) const {
+  std::cerr << "COMPILATION_EXECUTE_COMMAND_ST" << std::endl;
   if ((getDriver().CCPrintOptions ||
        getArgs().hasArg(options::OPT_v)) && !getDriver().CCGenDiagnostics) {
     raw_ostream *OS = &llvm::errs();
@@ -238,6 +242,7 @@ static bool InputsOk(const Command &C,
 
 void Compilation::ExecuteJobs(const JobList &Jobs,
                               FailingCommandList &FailingCommands) const {
+  std::cerr << "Compilation::ExecuteJobs_ST" << std::endl;
   // According to UNIX standard, driver need to continue compiling all the
   // inputs on the command line even one of them failed.
   // In all but CLMode, execute all the jobs unless the necessary inputs for the

@@ -19,6 +19,8 @@
 #include "clang/Basic/ExceptionSpecificationType.h"
 #include "llvm/ADT/ArrayRef.h"
 
+#include <iostream>
+
 using namespace clang;
 
 ExprDependence clang::computeDependence(FullExpr *E) {
@@ -434,6 +436,7 @@ ExprDependence clang::computeDependence(OMPIteratorExpr *E) {
 /// declaration reference
 /// based on the declaration being referenced.
 ExprDependence clang::computeDependence(DeclRefExpr *E, const ASTContext &Ctx) {
+  std::cerr << "clang::computeDependence_WITH_DeclRefExpr_AND_ASTContext" << std::endl;
   auto Deps = ExprDependence::None;
 
   if (auto *NNS = E->getQualifier())
@@ -462,9 +465,10 @@ ExprDependence clang::computeDependence(DeclRefExpr *E, const ASTContext &Ctx) {
   // [The "or more" case is not modeled as a DeclRefExpr. There are a bunch
   // more bullets here that we handle by treating the declaration as having a
   // dependent type if they involve a placeholder type that can't be deduced.]
-  if (Type->isDependentType())
+  if (Type->isDependentType()) {
+    std::cerr << "computeDependence_DEPENDENT_TYPE_TEMPLATE_PARM" << std::endl;
     return Deps | ExprDependence::TypeValueInstantiation;
-  else if (Type->isInstantiationDependentType())
+  } else if (Type->isInstantiationDependentType())
     Deps |= ExprDependence::Instantiation;
 
   //    - a conversion-function-id that specifies a dependent type
@@ -493,8 +497,10 @@ ExprDependence clang::computeDependence(DeclRefExpr *E, const ASTContext &Ctx) {
   //    - it is type-dependent [handled above]
 
   //    - it is the name of a non-type template parameter,
-  if (isa<NonTypeTemplateParmDecl>(Decl))
+  if (isa<NonTypeTemplateParmDecl>(Decl)) {
+    std::cerr << "computeDependence_NON_TYPE_TEMPLATE_PARM" << std::endl;
     return Deps | ExprDependence::ValueInstantiation;
+  }
 
   //   - it names a potentially-constant variable that is initialized with an
   //     expression that is value-dependent

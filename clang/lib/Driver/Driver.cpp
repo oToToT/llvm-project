@@ -93,6 +93,8 @@
 #include <unistd.h> // getpid
 #endif
 
+#include <iostream>
+
 using namespace clang::driver;
 using namespace clang;
 using namespace llvm::opt;
@@ -991,6 +993,8 @@ bool Driver::loadConfigFile() {
 }
 
 Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
+  std::cerr << "BUILD_COMPILATION_ST" << std::endl;
+  for (auto a: ArgList) std::cerr << "ARG = " << a << std::endl;
   llvm::PrettyStackTraceString CrashInfo("Compilation construction");
 
   // FIXME: Handle environment options which affect driver behavior, somewhere
@@ -1518,6 +1522,7 @@ void Driver::setUpResponseFiles(Compilation &C, Command &Cmd) {
 int Driver::ExecuteCompilation(
     Compilation &C,
     SmallVectorImpl<std::pair<int, const Command *>> &FailingCommands) {
+  std::cerr << "DRIVER_EXECUTE_COMPILATION_ST" << std::endl;
   // Just print if -### was present.
   if (C.getArgs().hasArg(options::OPT__HASH_HASH_HASH)) {
     C.getJobs().Print(llvm::errs(), "\n", true);

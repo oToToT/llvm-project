@@ -59,6 +59,8 @@
 #include <string>
 #include <type_traits>
 
+#include <iostream>
+
 namespace clang {
 namespace clangd {
 namespace {
@@ -162,6 +164,7 @@ ClangdServer::ClangdServer(const GlobalCompilationDatabase &CDB,
   WorkScheduler.emplace(
       CDB, TUScheduler::Options(Opts),
       std::make_unique<UpdateIndexCallbacks>(DynamicIdx.get(), Callbacks));
+  std::cerr << "CALNGD_SEREVR_CONSTRUCTOR_ST" << std::endl;
   // Adds an index to the stack, at higher priority than existing indexes.
   auto AddIndex = [&](SymbolIndex *Idx) {
     if (this->Index != nullptr) {
@@ -219,6 +222,7 @@ ClangdServer::~ClangdServer() {
 void ClangdServer::addDocument(PathRef File, llvm::StringRef Contents,
                                llvm::StringRef Version,
                                WantDiagnostics WantDiags, bool ForceRebuild) {
+  std::cerr << "CLANGD_SERVER_ADD_DOCUMENT_ST" << std::endl;
   std::string ActualVersion = DraftMgr.addDraft(File, Version, Contents);
   ParseOptions Opts;
 

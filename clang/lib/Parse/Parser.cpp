@@ -21,6 +21,9 @@
 #include "clang/Sema/ParsedTemplate.h"
 #include "clang/Sema/Scope.h"
 #include "llvm/Support/Path.h"
+
+#include <iostream>
+
 using namespace clang;
 
 
@@ -53,6 +56,7 @@ Parser::Parser(Preprocessor &pp, Sema &actions, bool skipFunctionBodies)
       Diags(PP.getDiagnostics()), GreaterThanIsOperator(true),
       ColonIsSacred(false), InMessageExpression(false),
       TemplateParameterDepth(0), ParsingInObjCContainer(false) {
+  std::cerr << "PARSER_CONSTRUCTOR_ST" << std::endl;
   SkipFunctionBodies = pp.isCodeCompletionEnabled() || skipFunctionBodies;
   Tok.startToken();
   Tok.setKind(tok::eof);
@@ -600,6 +604,7 @@ bool Parser::ParseFirstTopLevelDecl(DeclGroupPtrTy &Result) {
 ///           declaration
 /// [C++20]   module-import-declaration
 bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result, bool IsFirstDecl) {
+  std::cerr << "ParseTopLevelDecl_ST" << std::endl;
   DestroyTemplateIdAnnotationsRAIIObj CleanupRAII(*this);
 
   // Skip over the EOF token, flagging end of previous input for incremental
@@ -614,6 +619,7 @@ bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result, bool IsFirstDecl) {
     return false;
 
   case tok::kw_export:
+      std::cerr << "ParseTopLevelDecl_IS_EXPORT" << std::endl;
     switch (NextToken().getKind()) {
     case tok::kw_module:
       goto module_decl;
@@ -642,6 +648,7 @@ bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result, bool IsFirstDecl) {
     break;
 
   case tok::kw_module:
+  std::cerr << "ParseTopLevelDecl_IS_MODULE" << std::endl;
   module_decl:
     Result = ParseModuleDecl(IsFirstDecl);
     return false;
@@ -655,6 +662,7 @@ bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result, bool IsFirstDecl) {
   }
 
   case tok::annot_module_include:
+    std::cerr << "ParseTopLevelDecl_IS_ANNOT_MODULE_INCLUDE" << std::endl;
     Actions.ActOnModuleInclude(Tok.getLocation(),
                                reinterpret_cast<Module *>(
                                    Tok.getAnnotationValue()));
@@ -662,18 +670,21 @@ bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result, bool IsFirstDecl) {
     return false;
 
   case tok::annot_module_begin:
+      std::cerr << "ParseTopLevelDecl_IS_ANNOT_MODULE_BEGIN" << std::endl;
     Actions.ActOnModuleBegin(Tok.getLocation(), reinterpret_cast<Module *>(
                                                     Tok.getAnnotationValue()));
     ConsumeAnnotationToken();
     return false;
 
   case tok::annot_module_end:
+    std::cerr << "ParseTopLevelDecl_IS_ANNOT_MODULE_END" << std::endl;
     Actions.ActOnModuleEnd(Tok.getLocation(), reinterpret_cast<Module *>(
                                                   Tok.getAnnotationValue()));
     ConsumeAnnotationToken();
     return false;
 
   case tok::eof:
+      std::cerr << "ParseTopLevelDecl_IS_ANNOT_MODULE_EOF" << std::endl;
     // Check whether -fmax-tokens= was reached.
     if (PP.getMaxTokens() != 0 && PP.getTokenCount() > PP.getMaxTokens()) {
       PP.Diag(Tok.getLocation(), diag::warn_max_tokens_total)
@@ -692,6 +703,7 @@ bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result, bool IsFirstDecl) {
     return true;
 
   case tok::identifier:
+    std::cerr << "ParseTopLevelDecl_IS_IDENTIFIER" << std::endl;
     // C++2a [basic.link]p3:
     //   A token sequence beginning with 'export[opt] module' or
     //   'export[opt] import' and not immediately followed by '::'
@@ -707,6 +719,7 @@ bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result, bool IsFirstDecl) {
     break;
 
   default:
+    std::cerr << "ParseTopLevelDecl_IS_NOTHING" << std::endl;
     break;
   }
 
@@ -746,6 +759,7 @@ bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result, bool IsFirstDecl) {
 Parser::DeclGroupPtrTy
 Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
                                  ParsingDeclSpec *DS) {
+  std::cerr << "Parser::ParseExternalDeclaration_ST" << std::endl;
   DestroyTemplateIdAnnotationsRAIIObj CleanupRAII(*this);
   ParenBraceBracketBalancer BalancerRAIIObj(*this);
 
@@ -1035,6 +1049,7 @@ Parser::DeclGroupPtrTy
 Parser::ParseDeclOrFunctionDefInternal(ParsedAttributesWithRange &attrs,
                                        ParsingDeclSpec &DS,
                                        AccessSpecifier AS) {
+  std::cerr << "Parser::ParseDeclOrFunctionDefInternal_ST" << std::endl;
   MaybeParseMicrosoftAttributes(DS.getAttributes());
   // Parse the common declaration-specifiers piece.
   ParseDeclarationSpecifiers(DS, ParsedTemplateInfo(), AS,
@@ -1049,6 +1064,7 @@ Parser::ParseDeclOrFunctionDefInternal(ParsedAttributesWithRange &attrs,
   // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
   // declaration-specifiers init-declarator-list[opt] ';'
   if (Tok.is(tok::semi)) {
+    std::cerr << "Parser::ParseDeclOrFunctionDefInternal_IS_SEMI" << std::endl;
     auto LengthOfTSTToken = [](DeclSpec::TST TKind) {
       assert(DeclSpec::isDeclRep(TKind));
       switch(TKind) {
@@ -1138,9 +1154,12 @@ Parser::DeclGroupPtrTy
 Parser::ParseDeclarationOrFunctionDefinition(ParsedAttributesWithRange &attrs,
                                              ParsingDeclSpec *DS,
                                              AccessSpecifier AS) {
+  std::cerr << "Parser::ParseDeclarationOrFunctionDefinition_ST" << std::endl;
   if (DS) {
+    std::cerr << "Parser::ParseDeclarationOrFunctionDefinition_WITH_DS" << std::endl;
     return ParseDeclOrFunctionDefInternal(attrs, *DS, AS);
   } else {
+    std::cerr << "Parser::ParseDeclarationOrFunctionDefinition_DEFAULT" << std::endl;
     ParsingDeclSpec PDS(*this);
     // Must temporarily exit the objective-c container scope for
     // parsing c constructs and re-enter objc container scope
@@ -1168,6 +1187,7 @@ Parser::ParseDeclarationOrFunctionDefinition(ParsedAttributesWithRange &attrs,
 Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
                                       const ParsedTemplateInfo &TemplateInfo,
                                       LateParsedAttrList *LateParsedAttrs) {
+  std::cerr << "Parser::ParseFunctionDefinition_ST" << std::endl;
   // Poison SEH identifiers so they are flagged as illegal in function bodies.
   PoisonSEHIdentifiersRAIIObject PoisonSEHIdentifiers(*this, true);
   const DeclaratorChunk::FunctionTypeInfo &FTI = D.getFunctionTypeInfo();
@@ -1272,6 +1292,8 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
     }
     // FIXME: Should we really fall through here?
   }
+
+std::cerr << "Parser::ParseFunctionDefinition_IS_BODY_SCOPE" << std::endl;
 
   // Enter a scope for the function body.
   ParseScope BodyScope(this, Scope::FnScope | Scope::DeclScope |
@@ -1641,6 +1663,7 @@ Parser::TryAnnotateName(CorrectionCandidateCallback *CCC) {
   }
 
   IdentifierInfo *Name = Tok.getIdentifierInfo();
+  std::cerr << "TryAnnotateName: " << Name->getName().str() << std::endl;
   SourceLocation NameLoc = Tok.getLocation();
 
   // FIXME: Move the tentative declaration logic into ClassifyName so we can

@@ -50,6 +50,8 @@
 #include <functional>
 #include <unordered_map>
 
+#include <iostream>
+
 using namespace clang;
 using namespace sema;
 
@@ -1222,16 +1224,20 @@ ExprResult Sema::ActOnNameClassifiedAsNonType(Scope *S, const CXXScopeSpec &SS,
                                               NamedDecl *Found,
                                               SourceLocation NameLoc,
                                               const Token &NextToken) {
+  std::cerr << "Sema::ActOnNameClassifiedAsNonType_ST" << std::endl;
   if (getCurMethodDecl() && SS.isEmpty())
     if (auto *Ivar = dyn_cast<ObjCIvarDecl>(Found->getUnderlyingDecl()))
       return BuildIvarRefExpr(S, NameLoc, Ivar);
 
+  std::cerr << "ActOnNameClassifiedAsNonType_try_lookup" << std::endl;
   // Reconstruct the lookup result.
   LookupResult Result(*this, Found->getDeclName(), NameLoc, LookupOrdinaryName);
   Result.addDecl(Found);
   Result.resolveKind();
 
+  std::cerr << "ActOnNameClassifiedAsNonType_try_UseArgumentDependentLookup" << std::endl;
   bool ADL = UseArgumentDependentLookup(SS, Result, NextToken.is(tok::l_paren));
+  std::cerr << "ActOnNameClassifiedAsNonType_try_UseArgumentDependentLookup_DONE" << std::endl;
   return BuildDeclarationNameExpr(SS, Result, ADL);
 }
 

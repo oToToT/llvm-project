@@ -32,6 +32,8 @@
 #include <system_error>
 #include <utility>
 
+#include <iostream>
+
 using namespace clang;
 using namespace driver;
 
@@ -310,6 +312,7 @@ void Command::PrintFileNames() const {
 
 int Command::Execute(ArrayRef<llvm::Optional<StringRef>> Redirects,
                      std::string *ErrMsg, bool *ExecutionFailed) const {
+  std::cerr << "COMMAND_EXECUTE" << std::endl;
   PrintFileNames();
 
   SmallVector<const char *, 128> Argv;

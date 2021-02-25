@@ -21,6 +21,8 @@
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Support/Host.h"
+
+#include <iostream>
 using namespace clang;
 using namespace llvm::opt;
 
@@ -28,6 +30,8 @@ std::unique_ptr<CompilerInvocation> clang::createInvocationFromCommandLine(
     ArrayRef<const char *> ArgList, IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
     IntrusiveRefCntPtr<llvm::vfs::FileSystem> VFS, bool ShouldRecoverOnErorrs,
     std::vector<std::string> *CC1Args) {
+  std::cerr << "clang::createInvocationFromCommandLine_ST" << std::endl;
+  for (auto a: ArgList) std::cerr << "CREATE_ARG: " << a << std::endl;
   if (!Diags.get()) {
     // No diagnostics engine was provided, so create our own diagnostics object
     // with the default options.
@@ -92,6 +96,9 @@ std::unique_ptr<CompilerInvocation> clang::createInvocationFromCommandLine(
   const ArgStringList &CCArgs = Cmd.getArguments();
   if (CC1Args)
     *CC1Args = {CCArgs.begin(), CCArgs.end()};
+  std::cerr << "clang::createInvocationFromCommandLine_DONE_CC1_ARGS_ST" << std::endl;
+  for (const auto *a: CCArgs) std::cerr << a << std::endl;
+  std::cerr << "clang::createInvocationFromCommandLine_DONE_CC1_ARGS_ED" << std::endl;
   auto CI = std::make_unique<CompilerInvocation>();
   if (!CompilerInvocation::CreateFromArgs(*CI, CCArgs, *Diags, Args[0]) &&
       !ShouldRecoverOnErorrs)

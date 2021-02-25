@@ -46,6 +46,8 @@
 #include "llvm/Target/TargetMachine.h"
 #include <cstdio>
 
+#include <iostream>
+
 #ifdef CLANG_HAVE_RLIMITS
 #include <sys/resource.h>
 #endif
@@ -182,6 +184,7 @@ static int PrintSupportedCPUs(std::string TargetStr) {
 }
 
 int cc1_main(ArrayRef<const char *> Argv, const char *Argv0, void *MainAddr) {
+  std::cerr << "CC1_MAIN_ST_ARGV_SIZE = " << Argv.size() << std::endl;
   ensureSufficientStack();
 
   std::unique_ptr<CompilerInstance> Clang(new CompilerInstance());
@@ -276,5 +279,6 @@ int cc1_main(ArrayRef<const char *> Argv, const char *Argv0, void *MainAddr) {
     return !Success;
   }
 
+  std::cerr << "END_CC1_MAIN" << std::endl;
   return !Success;
 }

@@ -39,6 +39,9 @@
 #include <tuple>
 #include <vector>
 
+#include <iostream>
+#include <unistd.h>
+
 namespace clang {
 namespace clangd {
 namespace {
@@ -56,6 +59,7 @@ void actOnAllParentDirectories(PathRef FileName,
 
 tooling::CompileCommand
 GlobalCompilationDatabase::getFallbackCommand(PathRef File) const {
+  std::cerr << "GET_FALLBACK_COMMAND_ST" << std::endl;
   std::vector<std::string> Argv = {"clang"};
   // Clang treats .h files as C by default and files without extension as linker
   // input, resulting in unhelpful diagnostics.
@@ -68,6 +72,7 @@ GlobalCompilationDatabase::getFallbackCommand(PathRef File) const {
                               llvm::sys::path::filename(File), std::move(Argv),
                               /*Output=*/"");
   Cmd.Heuristic = "clangd fallback";
+  for (auto a: Cmd.CommandLine) std::cerr << "FALLBACK_COMMAND_DETAIL: " << a << std::endl;
   return Cmd;
 }
 
@@ -361,6 +366,7 @@ DirectoryBasedGlobalCompilationDatabase::
 
 llvm::Optional<tooling::CompileCommand>
 DirectoryBasedGlobalCompilationDatabase::getCompileCommand(PathRef File) const {
+  std::cerr << "GET_COMPILE_COMMAND_ST" << std::endl;
   CDBLookupRequest Req;
   Req.FileName = File;
   Req.ShouldBroadcast = true;
@@ -375,8 +381,9 @@ DirectoryBasedGlobalCompilationDatabase::getCompileCommand(PathRef File) const {
   }
 
   auto Candidates = Res->CDB->getCompileCommands(File);
-  if (!Candidates.empty())
+  if (!Candidates.empty()) {
     return std::move(Candidates.front());
+  }
 
   return None;
 }
@@ -773,8 +780,10 @@ tooling::CompileCommand OverlayCDB::getFallbackCommand(PathRef File) const {
   std::lock_guard<std::mutex> Lock(Mutex);
   Cmd.CommandLine.insert(Cmd.CommandLine.end(), FallbackFlags.begin(),
                          FallbackFlags.end());
-  if (ArgsAdjuster)
+  if (ArgsAdjuster) {
+    std::cerr << "APPLYING_ARGS_ADJUSTER" << std::endl;
     Cmd.CommandLine = ArgsAdjuster(Cmd.CommandLine, Cmd.Filename);
+  }
   return Cmd;
 }
 

@@ -55,6 +55,8 @@
 #include <memory>
 #include <vector>
 
+#include <iostream>
+
 // Force the linker to link in Clang-tidy modules.
 // clangd doesn't support the static analyzer.
 #define CLANG_TIDY_DISABLE_STATIC_ANALYZER_CHECKS
@@ -243,6 +245,7 @@ ParsedAST::build(llvm::StringRef Filename, const ParseInputs &Inputs,
                  std::unique_ptr<clang::CompilerInvocation> CI,
                  llvm::ArrayRef<Diag> CompilerInvocationDiags,
                  std::shared_ptr<const PreambleData> Preamble) {
+  std::cerr << "PARSE_AST_BUILD_ST" << std::endl;
   trace::Span Tracer("BuildAST");
   SPAN_ATTACH(Tracer, "File", Filename);
 
@@ -266,6 +269,7 @@ ParsedAST::build(llvm::StringRef Filename, const ParseInputs &Inputs,
   llvm::Optional<PreamblePatch> Patch;
   bool PreserveDiags = true;
   if (Preamble) {
+    std::cerr << "TRY_CREATE_PREAMBLE" << std::endl;
     Patch = PreamblePatch::create(Filename, Inputs, *Preamble);
     Patch->apply(*CI);
     PreserveDiags = Patch->preserveDiagnostics();
@@ -279,6 +283,7 @@ ParsedAST::build(llvm::StringRef Filename, const ParseInputs &Inputs,
 
   auto Action = std::make_unique<ClangdFrontendAction>();
   const FrontendInputFile &MainInput = Clang->getFrontendOpts().Inputs[0];
+  std::cerr << "PARSED_AST_BEGIN_SOURCE_FILE" << std::endl;
   if (!Action->BeginSourceFile(*Clang, MainInput)) {
     log("BeginSourceFile() failed when building AST for {0}",
         MainInput.getFile());
@@ -415,6 +420,7 @@ ParsedAST::build(llvm::StringRef Filename, const ParseInputs &Inputs,
   // Collect tokens of the main file.
   syntax::TokenCollector CollectTokens(Clang->getPreprocessor());
 
+  std::cerr << "PARSED_AST_EXECUTE_ACTION" << std::endl;
   if (llvm::Error Err = Action->Execute())
     log("Execute() failed when building AST for {0}: {1}", MainInput.getFile(),
         toString(std::move(Err)));

@@ -205,10 +205,7 @@ std::unique_ptr<CompilerInstance> BuildCompilerInstance() {
 
   Ins->setInvocation(std::move(Inv));
 
-  TargetInfo *TI = TargetInfo::CreateTargetInfo(
-      Ins->getDiagnostics(), Ins->getInvocation().TargetOpts);
-  Ins->setTarget(TI);
-  Ins->getTarget().adjust(Ins->getLangOpts());
+  Ins->createTarget();
   Ins->createFileManager();
   Ins->createSourceManager(Ins->getFileManager());
   Ins->createPreprocessor(TU_Complete);

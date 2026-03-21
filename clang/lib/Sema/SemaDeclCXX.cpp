@@ -14895,6 +14895,21 @@ buildMemcpyForAssignmentOp(Sema &S, SourceLocation Loc, QualType T,
     // about it.
     return StmtError();
 
+  // Synthesize the builtin call using the builtin parameter types directly.
+  // This memcpy is an implementation detail of synthesized memberwise
+  // assignment for a trivially-copyable array member, so model the builtin
+  // operation we intend to perform rather than depending on user-visible
+  // implicit conversion rules for pointers to arrays of __restrict-qualified
+  // pointers.
+  ExprResult ToCast =
+      S.ImpCastExprToType(To, MemCpy->getParamDecl(0)->getType(), CK_BitCast);
+  assert(ToCast.isUsable() && "Memcpy destination cast cannot fail");
+  To = ToCast.get();
+  ExprResult FromCast =
+      S.ImpCastExprToType(From, MemCpy->getParamDecl(1)->getType(), CK_BitCast);
+  assert(FromCast.isUsable() && "Memcpy source cast cannot fail");
+  From = FromCast.get();
+
   ExprResult MemCpyRef = S.BuildDeclRefExpr(MemCpy, S.Context.BuiltinFnTy,
                                             VK_PRValue, Loc, nullptr);
   assert(MemCpyRef.isUsable() && "Builtin reference cannot fail");
